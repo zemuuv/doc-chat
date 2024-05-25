@@ -1,54 +1,60 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 
+# Configuración de la aplicación FastAPI
 app = FastAPI()
 
-# Configurar logging para depuración
-logging.basicConfig(level=logging.INFO)
+# Configuración de CORS para permitir solicitudes desde el frontend
+origins = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:5500",  # Agrega este si estás usando Live Server en VS Code
+    "http://127.0.0.1:5500",  # Agrega este si estás usando Live Server en VS Code
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Definición del modelo de datos para la pregunta
 class Question(BaseModel):
     question: str
 
+# Configuración del logger
+logging.basicConfig(level=logging.INFO)
+
+# Ruta para manejar solicitudes POST en /chat
 @app.post("/chat")
 async def chat(question: Question):
     try:
-        # Definir el prompt para que solo responda preguntas médicas y desactivar el stream
-        payload = {
-            "prompt": f"Pregunta médica: {question.question}. Responde solo preguntas relacionadas con la medicina.",
-            "model": "llama2",  # Nombre del modelo que estás utilizando
-            "stream": False  # Asegurarse de que el stream esté desactivado
-        }
+        # Prompt modificado para incluir la restricción de responder solo preguntas médicas en español
+        modified_prompt = f"Por favor, responde solo preguntas relacionadas con medicina en español. Pregunta: {question.question}"
 
-        # Enviar una solicitud POST a la API de Ollama
+        # Realiza una solicitud a la API de Ollama
         response = requests.post(
-            "http://localhost:11434/api/generate",  # Reemplaza con la URL real de tu API de Ollama
-            json=payload  # El cuerpo de la solicitud contiene el prompt, el modelo y la configuración de stream
+            "http://localhost:11434/api/generate",
+            json={"prompt": modified_prompt, "model": "llama2", "stream": False}
         )
-
-        response.raise_for_status()  # Verifica si la solicitud tuvo éxito, si no, lanza una excepción
-        data = response.json()  # Analiza la respuesta JSON de la API de Ollama
-
-        # Extraer el campo "response" de la respuesta de Ollama API
-        ollama_response = data.get("response")
-        if not ollama_response:
-            # Si no se obtiene una respuesta, lanza una excepción HTTP con código 500
-            raise HTTPException(status_code=500, detail="No se pudo obtener una respuesta de Ollama API")
-
-        # Retorna solo el campo "response" de la respuesta obtenida de la API de Ollama
-        return {"response": ollama_response}
+        response.raise_for_status()
+        data = response.json()
+        
+        # Obtiene la respuesta de la API de Ollama
+        answer = data.get("response")
+        if not answer:
+            raise HTTPException(status_code=500, detail="No se pudo obtener una respuesta")
+        
+        return {"response": answer}
     except requests.RequestException as e:
-        # Si hay un error en la solicitud, lanza una excepción HTTP con el mensaje de error
         raise HTTPException(status_code=500, detail=str(e))
 
-
+# Ruta raíz para comprobar el funcionamiento de la API
 @app.get("/")
 async def root():
-    """
-    Este endpoint simplemente confirma que la API está funcionando.
-
-    Retorna:
-    - Un mensaje indicando que la API de chat está funcionando.
-    """
     return {"message": "API de chat está funcionando"}
