@@ -3,49 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <title>Doc-Chat</title>
+    <link rel="icon" href="imagenes/x-rays_icon-icons.com_66057.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('https://i.pinimg.com/originals/9d/fb/88/9dfb883ff4fe117edac2a65ea6ab14ff.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #fdfffd;
+        }
+        #question {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .response-container {
+            width: 80%;
+            padding: 10px;
+            margin-top: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background-color: rgba(231, 249, 231, 0.8);
+        }
+        .response-container p {
+            margin: 0;
+        }
+    </style>
     <script>
-        // Función asincrónica que se ejecuta cuando el usuario hace clic en el botón "Preguntar".
         async function askQuestion() {
-            // Obtiene el valor del campo de entrada (input) con el id 'question'.
+            console.log('pregunta enviada');
             const question = document.getElementById('question').value;
-            
             try {
-                // Realiza una solicitud HTTP POST a la ruta '/chat' en el servidor.
                 const response = await fetch('http://localhost:8000/chat', {
-                    method: 'POST', // Método HTTP utilizado para la solicitud.
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json' // Tipo de contenido de los datos enviados.
+                        'Content-Type': 'application/json'
                     },
-                    // El cuerpo de la solicitud contiene la pregunta del usuario en formato JSON.
                     body: JSON.stringify({ question: question })
                 });
-
-                // Verifica si la respuesta es exitosa
                 if (!response.ok) {
                     throw new Error(`Error: ${response.statusText}`);
                 }
-
-                // Espera la respuesta del servidor y la convierte a formato JSON.
                 const data = await response.json();
-
-                // Muestra la respuesta del servidor en el elemento HTML con el id 'answer'.
                 document.getElementById('answer').innerText = data.response;
             } catch (error) {
-                // Muestra el mensaje de error en caso de que ocurra un error en la solicitud
                 document.getElementById('answer').innerText = `Error: ${error.message}`;
             }
         }
     </script>
 </head>
 <body>
-    <h1>Chat UI</h1>
-    <!-- Campo de entrada donde el usuario escribe su pregunta. -->
+    <h1>Doc-Chat</h1>
     <input type="text" id="question" placeholder="Escribe tu pregunta">
-    
-    <!-- Botón que ejecuta la función 'askQuestion' cuando se hace clic. -->
     <button onclick="askQuestion()">Preguntar</button>
-    
-    <!-- Párrafo donde se mostrará la respuesta del servidor. -->
-    <p id="answer"></p>
+    <div class="response-container">
+        <p id="answer"></p>
+    </div>
 </body>
 </html>
